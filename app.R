@@ -151,10 +151,12 @@ server <- function(input, output, session) {
     #        }
     
     if (input$sex_GET == "M") {
+      sex_label = "boys"
       df <-
         read_csv("./data/boys_all.csv") %>% mutate(PML = `Compl weeks`) %>% select(-`Compl weeks`)
       df <- bind_rows(df, df_wt, df_length, df_HC)
     } else if (input$sex_GET == "F") {
+      sex_label = "girls"
       df <-
         read_csv("./data/girls_all.csv") %>% mutate(PML = `Compl weeks`) %>% select(-`Compl weeks`)
       df <- bind_rows(df, df_wt, df_length, df_HC)
@@ -196,6 +198,12 @@ server <- function(input, output, session) {
   })
   
   output$weight <- renderPlot({
+    if (input$sex_GET == "M") {
+      sex_label = "boys"
+    } else if (input$sex_GET == "F") {
+      sex_label = "girls"
+    }
+    
     df <- newData()
     
     ggplot(
@@ -218,6 +226,7 @@ server <- function(input, output, session) {
         ),
         size = 3
       ) +
+      labs(subtitle = paste0("Fenton growth curve, weight for ", sex_label)) +
       theme(
         text = element_text(size = 20),
         legend.position = "bottom",
@@ -234,6 +243,13 @@ server <- function(input, output, session) {
   })
   
   output$L <- renderPlot({
+    
+    if (input$sex_GET == "M") {
+      sex_label = "boys"
+    } else if (input$sex_GET == "F") {
+      sex_label = "girls"
+    }
+    
     df <- newData()
     
     ggplot(
@@ -256,6 +272,7 @@ server <- function(input, output, session) {
         size = 3
       ) +
       theme_bw() +
+      labs(subtitle = paste0("Fenton growth curve, length for ", sex_label)) +
       theme(
         text = element_text(size = 20),
         legend.position = "bottom",
@@ -269,6 +286,12 @@ server <- function(input, output, session) {
   
   
   output$HC <- renderPlot({
+    if (input$sex_GET == "M") {
+      sex_label = "boys"
+    } else if (input$sex_GET == "F") {
+      sex_label = "girls"
+    }
+    
     df <- newData()
     
     ggplot(
@@ -291,6 +314,7 @@ server <- function(input, output, session) {
         size = 3
       ) +
       theme_bw() +
+      labs(subtitle = paste0("Fenton growth curve, head circumference for ", sex_label)) +
       theme(
         text = element_text(size = 20),
         legend.position = "bottom",
