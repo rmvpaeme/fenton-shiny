@@ -5,7 +5,7 @@ library(shiny)
 # Define UI for application 
 ui <- fluidPage(
   theme = shinytheme("flatly"),
-  titlePanel("Fenton groeicurves"),
+  titlePanel("NICU growth curves"),
   sidebarLayout(sidebarPanel(
     tabsetPanel(
       type = "hidden",
@@ -37,17 +37,17 @@ ui <- fluidPage(
       type = "tabs",
       tabPanel(
         "Weight",
-        plotOutput("weight", height = "550px", width = "700px"),
+        plotOutput("weight", height = "900px", width = "900px"),
         hr(),
         p(
           "This tool has not been extensively tested, caution is advised. Code is available at https://github.com/rmvpaeme/fenton-shiny. Source: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. An application to manually enter growth values can be found at "
         ),
         a("https://peditools.org/peditools_universal/"),
       ),
-      tabPanel("Length", plotOutput("L", height = "550px", width = "700px")),
+      tabPanel("Length", plotOutput("L", height = "750px", width = "900px")),
       tabPanel(
         "Head Circumference",
-        plotOutput("HC", height = "550px", width = "700px")
+        plotOutput("HC", height = "750px", width = "900px")
       ),
       tabPanel("table", tableOutput("table")),
       
@@ -113,7 +113,7 @@ server <- function(input, output, session) {
       tibble(
         value = wt_GET_split,
         PML_GET = PML_GET,
-        annotation = "sample",
+        annotation = "measure",
         type = "weight"
       )
     df_wt <-
@@ -125,7 +125,7 @@ server <- function(input, output, session) {
       tibble(
         value = length_GET_split,
         PML_GET = PML_GET,
-        annotation = "sample",
+        annotation = "measure",
         type = "length"
       )
     df_length <-
@@ -137,7 +137,7 @@ server <- function(input, output, session) {
       tibble(
         value = HC_GET_split,
         PML_GET = PML_GET,
-        annotation = "sample",
+        annotation = "measure",
         type = "HC"
       )
     df_HC <-
@@ -153,13 +153,28 @@ server <- function(input, output, session) {
     if (input$sex_GET == "M") {
       sex_label = "boys"
       df <-
-        read_csv("./data/boys_all.csv") %>% mutate(PML = `Compl weeks`) %>% select(-`Compl weeks`)
+        read_csv("./data/boys_all.csv") %>% mutate(PML = Time) %>% select(-Time)
       df <- bind_rows(df, df_wt, df_length, df_HC)
+      #WHO growth chart https://www.cdc.gov/growthcharts/percentile_data_files.htm
+      #df_wt_WHO <- tibble(L = c(1.068795548, 0.695973505), M = c(4.879525083, 	5.672888765), S = c(0.136478767, 	0.129677511), P03 = c(3.614688072, 	4.34234145), P10 = c(4.020561446, 4.754479354), P50 = c(4.879525083,5.672888765), P90 = c(5.728152752, 6.638979132), P97 = c(6.121929103, 7.106250132), type = "weight", PML = c(46,50))
+      #df_wt_WHO <- df_wt_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
+      #df_wt_WHO$value <- df_wt_WHO$value*1000
+      #df <- bind_rows(df, df_wt_WHO)
+      
+      #df_l_WHO <- tibble(L = c(-0.45224446, -0.990594599), M = c(56.62842855, 59.60895343), S = c(0.04411683, 0.041795583), P03 = c(52.19859469, 	55.2632178), P10 = c(53.55364657, 56.57772145), P50 = c(56.62842855,59.60895343), P90 = c(59.96640329, 62.981581), P97 = c(61.62591488, 64.69240909), type = "length", PML = c(46,50))
+      #df_l_WHO <- df_l_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
+      #df_l_WHO$value <- df_l_WHO$value
+      #df <- bind_rows(df, df_l_WHO)
     } else if (input$sex_GET == "F") {
       sex_label = "girls"
       df <-
-        read_csv("./data/girls_all.csv") %>% mutate(PML = `Compl weeks`) %>% select(-`Compl weeks`)
+        read_csv("./data/girls_all.csv") %>% mutate(PML = Time) %>% select(-Time)
       df <- bind_rows(df, df_wt, df_length, df_HC)
+      #WHO growth chart https://www.cdc.gov/growthcharts/percentile_data_files.htm
+      #df_wt_WHO <- tibble(L = c(1.105537708), M = c(4.544776513), S = c(0.131733888), P03 = 3.402293298, P10 = 3.770157472, P50 = 4.544776513, P90 = 5.305632496, P97 = 5.657379108, type = "weight", PML = 46)
+      #df_wt_WHO <- df_wt_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
+      #df_wt_WHO$value <- df_wt_WHO$value*1000
+      #df <- bind_rows(df, df_wt_WHO)
     }
     
     
@@ -174,27 +189,28 @@ server <- function(input, output, session) {
     }
     df <- newData()
     
-    df_spread_sample <-
-      df %>% filter(annotation == "sample")  %>% spread(key = annotation, value = value) %>% select(-c(L, M, S))
-    df_spread_sample$PML_orig <- df_spread_sample$PML
-    df_spread_sample$PML <- round(df_spread_sample$PML, 0)
-    df_spread_sample$annotation <- "sample"
+    df_spread_measure <-
+      df %>% filter(annotation == "measure")  %>% spread(key = annotation, value = value) %>% select(-c(L, M, S))
+    df_spread_measure$PML_orig <- df_spread_measure$PML
+    df_spread_measure$PML <- round(df_spread_measure$PML, 2)
+    df_spread_measure$annotation <- "measure"
     df_spread_LMS <-
-      df %>% filter(annotation != "sample")  %>% spread(key = annotation, value = value)
-    df_spread_all <- left_join(df_spread_LMS, df_spread_sample)
-    df_spread_all$P_sample <-
+      df %>% filter(annotation != "measure")  %>% spread(key = annotation, value = value)
+    df_spread_LMS$PML <- round( df_spread_LMS$PML, 2)
+    df_spread_all <- left_join(df_spread_LMS, df_spread_measure)
+    df_spread_all$P_measure <-
       LMS2p(df_spread_all$L,
             df_spread_all$M,
             df_spread_all$S,
-            X = df_spread_all$sample)
+            X = df_spread_all$measure)
     df_spread_all <-
-      df_spread_all %>% filter(annotation == "sample") %>% select(c(PML_orig, P_sample, sample, type))
+      df_spread_all %>% filter(annotation == "measure") %>% select(c(PML_orig, P_measure, measure, type))
     df_spread_all <-
       df_spread_all %>% mutate(PML = PML_orig,
-                               Percentile = P_sample,
-                               value = sample) %>% select(-c(PML_orig, P_sample, sample))
+                               Percentile = P_measure,
+                               value = measure) %>% select(-c(PML_orig, P_measure, measure))
     df_spread_all <-
-      df_spread_all %>% filter(value > 0) %>% arrange(type, PML)
+      df_spread_all %>% filter(value > 0) %>% mutate(Percentile = Percentile*100) %>% arrange(type, PML)
   })
   
   output$weight <- renderPlot({
@@ -207,7 +223,7 @@ server <- function(input, output, session) {
     df <- newData()
     
     ggplot(
-      data = df %>% filter(type == "weight", annotation != "sample"),
+      data = df %>% filter(type == "weight", annotation != "measure"),
       aes(
         x = PML,
         y = as.numeric(value),
@@ -217,7 +233,7 @@ server <- function(input, output, session) {
       theme_bw() +
       geom_line() +
       geom_point(
-        data = df %>% filter(type == "weight", annotation == "sample", value > 0),
+        data = df %>% filter(type == "weight", annotation == "measure", value > 0),
         aes(
           y = as.numeric(value),
           x = PML,
@@ -226,19 +242,35 @@ server <- function(input, output, session) {
         ),
         size = 3
       ) +
-      labs(subtitle = paste0("Fenton growth curve, weight for ", sex_label)) +
+      labs(subtitle = paste0("Growth curve, weight for ", sex_label)) +
       theme(
         text = element_text(size = 20),
         legend.position = "bottom",
         legend.box = "horizontal",
         legend.title = element_blank()
       ) +
-      scale_x_continuous(breaks = seq(22, 42, 1), name = "PML") +
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML") +
       scale_y_continuous(
-        breaks = seq(0, 5000, 400),
-        limits = c(0, 5000),
+        breaks = seq(0, 7200, 400),
+        limits = c(0, 7200),
         name = "gram"
-      )
+      )# +
+      #annotate(geom = "vline",
+      #         x = c(42),
+      #         xintercept = c(42),
+      #         linetype = c("dashed")) +
+      #annotate(geom = "text",
+      #         label = c(as.character("WHO curve")),
+      #         x = c(42.1),
+      #         y = c(1600),
+      #         angle = 90, 
+      #         vjust = 1, color = "black") +
+      #annotate(geom = "text",
+      #         label = c(as.character("Fenton curve")),
+      #         x = c(41.9),
+      #         y = c(1600),
+      #         angle = 90, 
+      #         vjust = 0, color = "black")
     
   })
   
@@ -253,7 +285,7 @@ server <- function(input, output, session) {
     df <- newData()
     
     ggplot(
-      data = df %>% filter(type  %in% c("length"), annotation != "sample"),
+      data = df %>% filter(type  %in% c("length"), annotation != "measure", value > 0),
       aes(
         x = PML,
         y = as.numeric(value),
@@ -262,7 +294,7 @@ server <- function(input, output, session) {
     )  +
       geom_line() +
       geom_point(
-        data = df %>% filter(type == "length", annotation == "sample", value > 0),
+        data = df %>% filter(type == "length", annotation == "measure", value > 0),
         aes(
           y = as.numeric(value),
           x = PML,
@@ -279,8 +311,27 @@ server <- function(input, output, session) {
         legend.box = "horizontal",
         legend.title = element_blank()
       ) +
-      scale_y_continuous(breaks = seq(18, 60, 2), name = "centimeter") +
-      scale_x_continuous(breaks = seq(22, 42, 1), name = "PML") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
+      scale_y_continuous(breaks = seq(18, 70, 4), name = "centimeter") +
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML")#+
+      #annotate(geom = "vline",
+      #         x = c(42),
+      #         xintercept = c(42),
+      #         linetype = c("dashed")) +
+      #annotate(geom = "text",
+      #         label = c(as.character("WHO curve")),
+      #         x = c(42.1),
+      #         y = c(30),
+      #         angle = 90, 
+      #         vjust = 1, color = "black") +
+      #annotate(geom = "text",
+      #         label = c(as.character("Fenton curve")),
+      #         x = c(41.9),
+      #         y = c(30),
+      #         angle = 90, 
+      #         vjust = 0, color = "black")
+    
+    
+    #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
     
   })
   
@@ -295,7 +346,7 @@ server <- function(input, output, session) {
     df <- newData()
     
     ggplot(
-      data = df %>% filter(type  %in% c("HC"), annotation != "sample"),
+      data = df %>% filter(type  %in% c("HC"), annotation != "measure"),
       aes(
         x = PML,
         y = as.numeric(value),
@@ -304,7 +355,7 @@ server <- function(input, output, session) {
     )  +
       geom_line() +
       geom_point(
-        data = df %>% filter(type == "HC", annotation == "sample", value > 0),
+        data = df %>% filter(type == "HC", annotation == "measure", value > 0),
         aes(
           y = as.numeric(value),
           x = PML,
@@ -322,7 +373,7 @@ server <- function(input, output, session) {
         legend.title = element_blank()
       ) +
       scale_y_continuous(breaks = seq(18, 60, 2), name = "centimeter") +
-      scale_x_continuous(breaks = seq(22, 42, 1), name = "PML") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
     
   })
 }
