@@ -1,5 +1,16 @@
-# fenton-shiny
+# Fenton growth curves - shiny app
 
-The raw data (L,M,S values) can be obtained from Tanis Fenton (tfenton@ucalgary.ca).
+## Background
+The raw data (L,M,S values) can be obtained from Tanis Fenton (tfenton@ucalgary.ca). Afterwards, the data need to be reworked so that it follows the format of the csv files in the `data` folder in this github repository.
 
-Values can be entered through a GET request, for example: http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA
+## Usage
+Values can only be entered through a HTTP GET request:
+- Gestational age (in weeks): 23.145 equals 23 weeks + 1 day (=23+1/7) 
+- weight (in grams): &weight_GET=`400,500,600`
+- length (in cm): `&length_GET=34,33,NA`
+- head circumference (in cm): `&HC_GET=23,NA,25`
+- Sex (M or F): `&sex_GET=M`
+Furthermore, `?advanced=yes` needs to be specified.
+
+## Example URL
+http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA
