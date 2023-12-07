@@ -1,7 +1,7 @@
 # Fenton growth curves - shiny app
 
-## Background
-I can't share the raw data (L,M,S values), but it can be obtained in Excel format from Tanis Fenton (tfenton@ucalgary.ca). Afterwards, the data need to be reworked so that it follows the format of the csv files in the `data` folder in this github repository (I have included the first 2 lines of my reworked csv files as example).
+## Background and setup
+I can't share the raw data (L,M,S values), but it can be obtained in Excel format from Tanis Fenton (tfenton@ucalgary.ca). Afterwards, the data need to be reworked so that it follows the format of the csv files in the `data` folder in this github repository (I have included the first 2 lines of my reworked csv files as example). After obtaining these csv files, reworked datafiles (containing P03 > P97 threshold) can be obtained with `growthcurves_*.R`. 
 
 ## Usage
 Values can only be entered through a HTTP GET request:
