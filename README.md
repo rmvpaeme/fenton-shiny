@@ -7,7 +7,7 @@ Values can only be entered through a HTTP GET request:
 - length (in cm): `&length_GET=34,33,NA`
 - head circumference (in cm): `&HC_GET=23,NA,25`
 - Sex (M or F): `&sex_GET=M`
-Furthermore, `?advanced=yes` needs to be specified.
+The number of values in each field needs to be equal, and needs to contain either a value > 0 or "NA".
 
 ## Example URL
 - Basic example: http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA
@@ -18,7 +18,7 @@ I can't share the raw data (L,M,S values), but it can be obtained in Excel forma
 
 ## Installation
 
-The app can be used at rubenvp.shinyapps.io/fenton or selfhosted. 
+The app can be used at rubenvp.shinyapps.io/fenton or self hosted through Docker. 
 
 ```
 docker run -dp 0.0.0.0:3838:3838   -v /data:/srv/shiny-server/data  --platform linux/amd64 rmvpaeme/fenton:0.1
