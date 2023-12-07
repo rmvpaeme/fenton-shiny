@@ -5,7 +5,7 @@ The purpose of this app is not to be a fully customizable growth chart plotter, 
 
 Values can only be entered through a HTTP GET request:
 - Gestational age (in weeks): `&PML_GET=23.14,23.28`. 23.145 equals 23 weeks + 1 day (=23+1/7).
-- weight (in grams): &weight_GET=`400,500,600`
+- weight (in grams): `&weight_GET=400,500,600`
 - length (in cm): `&length_GET=34,33,NA`
 - head circumference (in cm): `&HC_GET=23,NA,25`
 - Sex (M or F): `&sex_GET=M`
