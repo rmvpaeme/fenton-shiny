@@ -27,6 +27,7 @@ ui <- fluidPage(
         textInput("HC_GET", "head circumference (in cm) in CSV ", value = NA),
         textInput("weight_GET", "weight (in gram) in CSV ", value = NA),
         textInput("length_GET", "length (in cm) in CSV ", value = NA),
+
       ),
     ),
   ),
@@ -49,10 +50,10 @@ ui <- fluidPage(
         "Head Circumference",
         plotOutput("HC", height = "750px", width = "900px")
       ),
-      tabPanel("table", tableOutput("table")),
+      tabPanel("Percentile table", tableOutput("table")),
       
       tabPanel(
-        "Documentation",
+        "Usage",
         p("Values can be entered through a GET request. Examples are"),
         a(
           "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA"
@@ -242,14 +243,14 @@ server <- function(input, output, session) {
         ),
         size = 3
       ) +
-      labs(subtitle = paste0("Growth curve, weight for ", sex_label)) +
+      labs(subtitle = paste0("Fenton growth curve, weight for ", sex_label)) +
       theme(
         text = element_text(size = 20),
         legend.position = "bottom",
         legend.box = "horizontal",
         legend.title = element_blank()
       ) +
-      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML") +
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)") +
       scale_y_continuous(
         breaks = seq(0, 7200, 400),
         limits = c(0, 7200),
@@ -312,7 +313,7 @@ server <- function(input, output, session) {
         legend.title = element_blank()
       ) +
       scale_y_continuous(breaks = seq(18, 70, 4), name = "centimeter") +
-      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML")#+
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)")#+
       #annotate(geom = "vline",
       #         x = c(42),
       #         xintercept = c(42),
@@ -373,7 +374,7 @@ server <- function(input, output, session) {
         legend.title = element_blank()
       ) +
       scale_y_continuous(breaks = seq(18, 60, 2), name = "centimeter") +
-      scale_x_continuous(breaks = seq(22, 50, 2), name = "PML") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
     
   })
 }
