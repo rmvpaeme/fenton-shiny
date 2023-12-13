@@ -10,7 +10,7 @@ Values can only be entered through a HTTP GET request:
 - head circumference (in cm): `&HC_GET=23,NA,25`
 - Sex (M or F): `&sex_GET=M`
   
-The number of values in each field needs to be equal, and needs to contain either a value > 0 or "NA".
+The number of comma separated values in each field needs to be equal, and needs to contain either a value > 0 or "NA".
 
 ## Example URL
 - Basic example: http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA
