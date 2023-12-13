@@ -44,7 +44,7 @@ The `data` folder should contain:
 - girls_all_spread.csv # output from growthcurves_girls.R
 ```
 
-Examples are available in this github repository
+You'll have to generate these csv files yourself after requesting the raw data (see above). Examples are available in this github repository
 
 Afterwards, the app can be found at:
 
