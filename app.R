@@ -1,6 +1,7 @@
 library(tidyverse)
 library(shinythemes)
 library(shiny)
+library(DT)
 
 # Define UI for application 
 ui <- fluidPage(
@@ -27,7 +28,7 @@ ui <- fluidPage(
         textInput("HC_GET", "head circumference (in cm) in CSV ", value = NA),
         textInput("weight_GET", "weight (in gram) in CSV ", value = NA),
         textInput("length_GET", "length (in cm) in CSV ", value = NA),
-
+        
       ),
     ),
   ),
@@ -38,19 +39,19 @@ ui <- fluidPage(
       type = "tabs",
       tabPanel(
         "Weight",
-        plotOutput("weight", height = "900px", width = "900px"),
+        plotOutput("weight", height = "800px", width = "90%"),
         hr(),
         p(
           "This tool has not been extensively tested, caution is advised. Code is available at https://github.com/rmvpaeme/fenton-shiny. Source: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. An application to manually enter growth values can be found at "
         ),
         a("https://peditools.org/peditools_universal/"),
       ),
-      tabPanel("Length", plotOutput("L", height = "750px", width = "900px")),
+      tabPanel("Length", plotOutput("L", height = "800px", width = "90%")),
       tabPanel(
         "Head Circumference",
-        plotOutput("HC", height = "750px", width = "900px")
+        plotOutput("HC", height = "800px", width = "90%"),
       ),
-      tabPanel("Percentile table", tableOutput("table")),
+      tabPanel("Percentile table", DT::dataTableOutput("table")),
       
       tabPanel(
         "Usage",
@@ -183,7 +184,7 @@ server <- function(input, output, session) {
   })
   
   
-  output$table <- renderTable({
+  output$table <-  DT::renderDataTable({
     LMS2p <- function(L, M, S, X) {
       Z = (((X / M) ^ L) - 1) / (L * S)
       P <- pnorm(Z)
@@ -207,12 +208,37 @@ server <- function(input, output, session) {
     df_spread_all <-
       df_spread_all %>% filter(annotation == "measure") %>% select(c(PML_orig, P_measure, measure, type))
     df_spread_all <-
-      df_spread_all %>% mutate(PML = PML_orig,
+      df_spread_all %>% mutate(measurement = type, GA = PML_orig,
                                Percentile = P_measure,
-                               value = measure) %>% select(-c(PML_orig, P_measure, measure))
+                               value = measure) %>% select(-c(type, PML_orig, P_measure, measure))
     df_spread_all <-
-      df_spread_all %>% filter(value > 0) %>% mutate(Percentile = Percentile*100) %>% arrange(type, PML)
-  })
+      df_spread_all %>% filter(value > 0) %>% mutate(Percentile = Percentile*100) %>% arrange(measurement, GA)
+    df_spread_all <- df_spread_all %>% mutate_if(is.numeric, ~ round(., 2))
+    DT::datatable({
+      df_spread_all
+    },
+    #caption = "Je kan de tabel opslaan via de Excel knop om nadien terug te importeren in de tool om extra waarden toe te voegen. Belangrijk: doe zelf geen aanpassingen aan de Excel.",  
+    extensions = 'Buttons',
+    
+    options = list(
+      paging = TRUE,
+      searching = TRUE,
+      fixedColumns = TRUE,
+      autoWidth = TRUE,
+      ordering = TRUE,
+      dom = 'frtBip',
+      buttons = list(
+        list(
+          extend = "excel", 
+          text = "Save as Excel file"
+        )
+      )
+    ),
+    rownames = FALSE,
+    
+    class = "display")
+    
+    })
   
   output$weight <- renderPlot({
     if (input$sex_GET == "M") {
@@ -256,22 +282,22 @@ server <- function(input, output, session) {
         limits = c(0, 7200),
         name = "gram"
       )# +
-      #annotate(geom = "vline",
-      #         x = c(42),
-      #         xintercept = c(42),
-      #         linetype = c("dashed")) +
-      #annotate(geom = "text",
-      #         label = c(as.character("WHO curve")),
-      #         x = c(42.1),
-      #         y = c(1600),
-      #         angle = 90, 
-      #         vjust = 1, color = "black") +
-      #annotate(geom = "text",
-      #         label = c(as.character("Fenton curve")),
-      #         x = c(41.9),
-      #         y = c(1600),
-      #         angle = 90, 
-      #         vjust = 0, color = "black")
+    #annotate(geom = "vline",
+    #         x = c(42),
+    #         xintercept = c(42),
+    #         linetype = c("dashed")) +
+    #annotate(geom = "text",
+    #         label = c(as.character("WHO curve")),
+    #         x = c(42.1),
+    #         y = c(1600),
+    #         angle = 90, 
+    #         vjust = 1, color = "black") +
+    #annotate(geom = "text",
+    #         label = c(as.character("Fenton curve")),
+    #         x = c(41.9),
+    #         y = c(1600),
+    #         angle = 90, 
+    #         vjust = 0, color = "black")
     
   })
   
@@ -314,22 +340,22 @@ server <- function(input, output, session) {
       ) +
       scale_y_continuous(breaks = seq(18, 70, 4), name = "centimeter") +
       scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)")#+
-      #annotate(geom = "vline",
-      #         x = c(42),
-      #         xintercept = c(42),
-      #         linetype = c("dashed")) +
-      #annotate(geom = "text",
-      #         label = c(as.character("WHO curve")),
-      #         x = c(42.1),
-      #         y = c(30),
-      #         angle = 90, 
-      #         vjust = 1, color = "black") +
-      #annotate(geom = "text",
-      #         label = c(as.character("Fenton curve")),
-      #         x = c(41.9),
-      #         y = c(30),
-      #         angle = 90, 
-      #         vjust = 0, color = "black")
+    #annotate(geom = "vline",
+    #         x = c(42),
+    #         xintercept = c(42),
+    #         linetype = c("dashed")) +
+    #annotate(geom = "text",
+    #         label = c(as.character("WHO curve")),
+    #         x = c(42.1),
+    #         y = c(30),
+    #         angle = 90, 
+    #         vjust = 1, color = "black") +
+    #annotate(geom = "text",
+    #         label = c(as.character("Fenton curve")),
+    #         x = c(41.9),
+    #         y = c(30),
+    #         angle = 90, 
+    #         vjust = 0, color = "black")
     
     
     #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
