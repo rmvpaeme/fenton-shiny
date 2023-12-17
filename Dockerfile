@@ -18,6 +18,7 @@ RUN R -e 'install.packages(c(\
               "shiny", \
               "tidyverse", \
               "shinythemes", \
+              "DT", \
               "shinyTime" \
             ), \
             repos="https://packagemanager.rstudio.com/cran/__linux__/focal/2023-12-04"\
