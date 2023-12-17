@@ -19,7 +19,7 @@ ui <- fluidPage(
                )),
       conditionalPanel(
         condition = "input.advanced == 'yes'",
-        textInput("sex_GET", "sex (M of F)", value = "M"),
+        textInput("sex_GET", "sex (M or F)", value = "M"),
         textInput(
           "PML_GET",
           "Postmenstrual age (weeks in 23+1/7 format) in CSV",
@@ -30,6 +30,14 @@ ui <- fluidPage(
         textInput("length_GET", "length (in cm) in CSV ", value = NA),
         
       ),
+      conditionalPanel(
+        condition = "(input.advanced == 'no')",
+        fileInput(
+          'file_excel',
+          p('Upload Excel file with custom data.', a('Click here', href = "https://github.com/rmvpaeme/fenton-shiny/raw/main/example_excel.xlsx"),  'to download the template Excel file.'),
+          accept = c(".xlsx")
+        )
+      )
     ),
   ),
   
@@ -41,10 +49,11 @@ ui <- fluidPage(
         "Weight",
         plotOutput("weight", height = "800px", width = "90%"),
         hr(),
+        h4("Disclaimer", style = "font-size:12px;"),
         p(
-          "This tool has not been extensively tested, caution is advised. Code is available at https://github.com/rmvpaeme/fenton-shiny. Source: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. An application to manually enter growth values can be found at "
-        ),
-        a("https://peditools.org/peditools_universal/"),
+          "This tool has not been extensively tested, caution is advised. Code is available at", a("https://github.com/rmvpaeme/fenton-shiny", href = "https://github.com/rmvpaeme/fenton-shiny", style = "font-size:12px;"), ". Source: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. A more extensive application to manually enter growth values can be found at "
+          , style = "font-size:12px;",
+        a("https://peditools.org/peditools_universal/", href = "https://peditools.org/peditools_universal/", style = "font-size:12px;")),
       ),
       tabPanel("Length", plotOutput("L", height = "800px", width = "90%")),
       tabPanel(
@@ -55,11 +64,13 @@ ui <- fluidPage(
       
       tabPanel(
         "Usage",
-        p("Values can be entered through a GET request. Examples are"),
+        p("Values can be entered through a GET request. Example: ",
         a(
-          "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA"
+          "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA", 
+          href = "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA"
         )
-      )
+      )),
+      
     )
   ))
 )
@@ -67,118 +78,140 @@ ui <- fluidPage(
 # Define server logic 
 server <- function(input, output, session) {
   newData <- reactive({
-    calc <- function(x)
-      eval(parse(text = x))
+    inFile_excel <- input$file_excel
     
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query[['naam']])) {
-      updateTextInput(session, "naam", value = query[['naam']])
-    }
-    if (!is.null(query[['advanced']])) {
-      updateTextInput(session, "advanced", value = query[['advanced']])
-    }
-    if (!is.null(query[['sex_GET']])) {
-      updateTextInput(session, "sex_GET", value = query[['sex_GET']])
-    }
-    if (!is.null(query[['HC_GET']])) {
-      updateTextInput(session, "HC_GET", value = query[['HC_GET']])
-    }
-    if (!is.null(query[['length_GET']])) {
-      updateTextInput(session, "length_GET", value = query[['length_GET']])
-    }
-    if (!is.null(query[['weight_GET']])) {
-      updateTextInput(session, "weight_GET", value = query[['weight_GET']])
-    }
-    if (!is.null(query[['PML_GET']])) {
-      updateTextInput(session, "PML_GET", value = query[['PML_GET']])
-    }
+    if (is.null(inFile_excel)) {
+      calc <- function(x)
+        eval(parse(text = x))
+      
+      query <- parseQueryString(session$clientData$url_search)
+      if (!is.null(query[['naam']])) {
+        updateTextInput(session, "naam", value = query[['naam']])
+      }
+      if (!is.null(query[['advanced']])) {
+        updateTextInput(session, "advanced", value = query[['advanced']])
+      }
+      if (!is.null(query[['sex_GET']])) {
+        updateTextInput(session, "sex_GET", value = query[['sex_GET']])
+      }
+      if (!is.null(query[['HC_GET']])) {
+        updateTextInput(session, "HC_GET", value = query[['HC_GET']])
+      }
+      if (!is.null(query[['length_GET']])) {
+        updateTextInput(session, "length_GET", value = query[['length_GET']])
+      }
+      if (!is.null(query[['weight_GET']])) {
+        updateTextInput(session, "weight_GET", value = query[['weight_GET']])
+      }
+      if (!is.null(query[['PML_GET']])) {
+        updateTextInput(session, "PML_GET", value = query[['PML_GET']])
+      }
+      
+      
+      PML_GET <- c("23+1/7,24+1/7")
+      HC_GET <- as.character(c("23,24"))
+      length_GET  <- as.character(c("30,35"))
+      sex_GET <- as.character(c("M"))
+      weight_GET <- as.character(c("400,500"))
+      HC_GET <- as.character(input$HC_GET)
+      length_GET  <- as.character(input$length_GET)
+      weight_GET <- as.character(input$weight_GET)
+      PML_GET <- as.character(input$PML_GET)
+      sex_GET <- as.character(input$sex_GET)
+      
+      
+      PML_GET <-
+        as.character(unlist(strsplit(PML_GET, split = ",")))
+      
+      wt_GET_split <-
+        as.numeric(unlist(strsplit(weight_GET, split = ",")))
+      df_wt <-
+        tibble(
+          value = wt_GET_split,
+          PML_GET = PML_GET,
+          annotation = "measure",
+          type = "weight"
+        )
+      
+      
+      length_GET_split <-
+        as.numeric(unlist(strsplit(length_GET, split = ",")))
+      df_length <-
+        tibble(
+          value = length_GET_split,
+          PML_GET = PML_GET,
+          annotation = "measure",
+          type = "length"
+        )
+      
+      HC_GET_split <-
+        as.numeric(unlist(strsplit(HC_GET, split = ",")))
+      df_HC <-
+        tibble(
+          value = HC_GET_split,
+          PML_GET = PML_GET,
+          annotation = "measure",
+          type = "HC"
+        )
+      
+      df_wt <-
+        df_wt %>% rowwise() %>% mutate(PML = calc(PML_GET)) %>% select(-PML_GET)
+      df_length <-
+        df_length %>% rowwise() %>% mutate(PML = calc(PML_GET))  %>% select(-PML_GET)
+      df_HC <-
+        df_HC %>% rowwise() %>% mutate(PML = calc(PML_GET)) %>% select(-PML_GET)
     
-    
-    PML_GET <- c("23+1/7,24+1/7")
-    HC_GET <- as.character(c("23,24"))
-    length_GET  <- as.character(c("30,35"))
-    sex_GET <- as.character(c("M"))
-    weight_GET <- as.character(c("400,500"))
-    HC_GET <- as.character(input$HC_GET)
-    length_GET  <- as.character(input$length_GET)
-    weight_GET <- as.character(input$weight_GET)
-    PML_GET <- as.character(input$PML_GET)
-    sex_GET <- as.character(input$sex_GET)
-    
-    
-    PML_GET <-
-      as.character(unlist(strsplit(PML_GET, split = ",")))
-    
-    wt_GET_split <-
-      as.numeric(unlist(strsplit(weight_GET, split = ",")))
-    df_wt <-
-      tibble(
-        value = wt_GET_split,
-        PML_GET = PML_GET,
-        annotation = "measure",
-        type = "weight"
-      )
-    df_wt <-
-      df_wt %>% rowwise() %>% mutate(PML = calc(PML_GET)) %>% select(-PML_GET)
-    
-    length_GET_split <-
-      as.numeric(unlist(strsplit(length_GET, split = ",")))
-    df_length <-
-      tibble(
-        value = length_GET_split,
-        PML_GET = PML_GET,
-        annotation = "measure",
-        type = "length"
-      )
-    df_length <-
-      df_length %>% rowwise() %>% mutate(PML = calc(PML_GET))  %>% select(-PML_GET)
-    
-    HC_GET_split <-
-      as.numeric(unlist(strsplit(HC_GET, split = ",")))
-    df_HC <-
-      tibble(
-        value = HC_GET_split,
-        PML_GET = PML_GET,
-        annotation = "measure",
-        type = "HC"
-      )
-    df_HC <-
-      df_HC %>% rowwise() %>% mutate(PML = calc(PML_GET)) %>% select(-PML_GET)
-    
-    
-    #        } else {
-    #          df_wt <- tibble(value = NA, PML = NA, annotation = NA, type = NA)
-    #          df_HC <- tibble(value = NA, PML = NA, annotation = NA, type = NA)
-    #          df_length<- tibble(value = NA, PML = NA, annotation = NA, type = NA)
-    #        }
-    
-    if (input$sex_GET == "M") {
+    if (input$sex_GET == "M" ) {
       sex_label = "boys"
       df <-
         read_csv("./data/boys_all.csv") %>% mutate(PML = Time) %>% select(-Time)
       df <- bind_rows(df, df_wt, df_length, df_HC)
-      #WHO growth chart https://www.cdc.gov/growthcharts/percentile_data_files.htm
-      #df_wt_WHO <- tibble(L = c(1.068795548, 0.695973505), M = c(4.879525083, 	5.672888765), S = c(0.136478767, 	0.129677511), P03 = c(3.614688072, 	4.34234145), P10 = c(4.020561446, 4.754479354), P50 = c(4.879525083,5.672888765), P90 = c(5.728152752, 6.638979132), P97 = c(6.121929103, 7.106250132), type = "weight", PML = c(46,50))
-      #df_wt_WHO <- df_wt_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
-      #df_wt_WHO$value <- df_wt_WHO$value*1000
-      #df <- bind_rows(df, df_wt_WHO)
-      
-      #df_l_WHO <- tibble(L = c(-0.45224446, -0.990594599), M = c(56.62842855, 59.60895343), S = c(0.04411683, 0.041795583), P03 = c(52.19859469, 	55.2632178), P10 = c(53.55364657, 56.57772145), P50 = c(56.62842855,59.60895343), P90 = c(59.96640329, 62.981581), P97 = c(61.62591488, 64.69240909), type = "length", PML = c(46,50))
-      #df_l_WHO <- df_l_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
-      #df_l_WHO$value <- df_l_WHO$value
-      #df <- bind_rows(df, df_l_WHO)
-    } else if (input$sex_GET == "F") {
+    } else if (input$sex_GET == "F")  {
       sex_label = "girls"
       df <-
         read_csv("./data/girls_all.csv") %>% mutate(PML = Time) %>% select(-Time)
       df <- bind_rows(df, df_wt, df_length, df_HC)
-      #WHO growth chart https://www.cdc.gov/growthcharts/percentile_data_files.htm
-      #df_wt_WHO <- tibble(L = c(1.105537708), M = c(4.544776513), S = c(0.131733888), P03 = 3.402293298, P10 = 3.770157472, P50 = 4.544776513, P90 = 5.305632496, P97 = 5.657379108, type = "weight", PML = 46)
-      #df_wt_WHO <- df_wt_WHO %>% gather(key = annotation, value = value, P03:P97, -PML, -type)
-      #df_wt_WHO$value <- df_wt_WHO$value*1000
-      #df <- bind_rows(df, df_wt_WHO)
     }
-    
+  }
+    else if (!is.null(inFile_excel)) {
+        #inFile_excel <- tibble( datapath = "/Users/rmvpaeme/fenton/example_excel.xlsx")
+        #df_wt <- readxl::read_excel(test, skip = 9, col_names = c("date", "PML", "value", "drop1", "drop2")) %>% select(-drop1, -drop2)
+        #sex_excel <- readxl::read_excel(test, range = "B5", col_names = FALSE) %>% pull()
+        
+        df_wt <- readxl::read_excel(inFile_excel$datapath, skip = 9, col_names = c("date", "PML", "value", "drop1", "drop2")) %>% select(-date, -drop1, -drop2)
+        df_wt$annotation <- "measure"
+        df_wt$type <- "weight"
+        df_wt$value <- as.double(df_wt$value)
+        
+        df_length <- readxl::read_excel(inFile_excel$datapath, skip = 9, col_names = c("date", "PML", "drop1", "value", "drop2")) %>% select(-date, -drop1, -drop2)
+        df_length$annotation <- "measure"
+        df_length$type <- "length"
+        df_length$value <- as.double(df_length$value)
+        
+        df_HC <- readxl::read_excel(inFile_excel$datapath, skip = 9, col_names = c("date", "PML", "drop1", "drop2", "value")) %>% select(-date, -drop1, -drop2)
+        df_HC$annotation <- "measure"
+        df_HC$type <- "HC"
+        df_HC$value <- as.double(df_HC$value)
+        
+        sex_excel <- readxl::read_excel(inFile_excel$datapath, range = "B5", col_names = FALSE) %>% pull()
+        sex_excel <- as.character(sex_excel)
+        
+        
+        if (sex_excel == "M" ) {
+          sex_label = "boys"
+          df <-
+            read_csv("./data/boys_all.csv") %>% mutate(PML = Time) %>% select(-Time)
+          df <- bind_rows(df, df_wt, df_length, df_HC)
+        } else if (sex_excel == "F")  {
+          sex_label = "girls"
+          df <-
+            read_csv("./data/girls_all.csv") %>% mutate(PML = Time) %>% select(-Time)
+          df <- bind_rows(df, df_wt, df_length, df_HC)
+          
+        }
+    }
+
+    list(df = df, sex_label = sex_label)
     
     
   })
@@ -189,7 +222,7 @@ server <- function(input, output, session) {
       Z = (((X / M) ^ L) - 1) / (L * S)
       P <- pnorm(Z)
     }
-    df <- newData()
+    df <- newData()$df
     
     df_spread_measure <-
       df %>% filter(annotation == "measure")  %>% spread(key = annotation, value = value) %>% select(-c(L, M, S))
@@ -241,13 +274,14 @@ server <- function(input, output, session) {
     })
   
   output$weight <- renderPlot({
-    if (input$sex_GET == "M") {
-      sex_label = "boys"
-    } else if (input$sex_GET == "F") {
-      sex_label = "girls"
-    }
+    #if (input$sex_GET == "M" ) {
+    #  sex_label = "boys"
+    #} else if (input$sex_GET == "F") {
+    #  sex_label = "girls"
+    #}
     
-    df <- newData()
+    sex_label <- newData()$sex_label
+    df <- newData()$df
     
     ggplot(
       data = df %>% filter(type == "weight", annotation != "measure"),
@@ -303,13 +337,8 @@ server <- function(input, output, session) {
   
   output$L <- renderPlot({
     
-    if (input$sex_GET == "M") {
-      sex_label = "boys"
-    } else if (input$sex_GET == "F") {
-      sex_label = "girls"
-    }
-    
-    df <- newData()
+    sex_label <- newData()$sex_label
+    df <- newData()$df
     
     ggplot(
       data = df %>% filter(type  %in% c("length"), annotation != "measure", value > 0),
@@ -364,13 +393,8 @@ server <- function(input, output, session) {
   
   
   output$HC <- renderPlot({
-    if (input$sex_GET == "M") {
-      sex_label = "boys"
-    } else if (input$sex_GET == "F") {
-      sex_label = "girls"
-    }
-    
-    df <- newData()
+    sex_label <- newData()$sex_label
+    df <- newData()$df
     
     ggplot(
       data = df %>% filter(type  %in% c("HC"), annotation != "measure"),
