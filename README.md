@@ -3,7 +3,9 @@
 ## Usage
 The purpose of this app is not to be a fully customizable growth chart plotter, this already exists at https://peditools.org/peditools_universal/. 
 
-Values can only be entered through a HTTP GET request:
+Values can only be entered through a HTTP GET request or through an Excel sheet (see template in this repository). 
+
+For the HTTP GET request are the following parameters required:
 - Gestational age (in weeks): `&PML_GET=23.14,23.28`. 23.142 equals 23 weeks + 1 day (=23+1/7).
 - weight (in grams): `&weight_GET=400,500,600`
 - length (in cm): `&length_GET=34,33,NA`
@@ -46,7 +48,7 @@ The `data` folder should contain:
 - girls_all_spread.csv # output from growthcurves_girls.R
 ```
 
-You'll have to generate these csv files yourself after requesting the raw data (see above). Examples are available in this github repository
+You'll have to generate these csv files yourself after requesting the raw data (see above). Examples are available in this github repository.
 
 Afterwards, the app can be found at:
 
