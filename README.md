@@ -30,7 +30,7 @@ After obtaining the data, the Excel sheet need to be reworked so that it follows
 The app can be used at rubenvp.shinyapps.io/fenton or self hosted through Docker. 
 
 ```
-docker run -dp 0.0.0.0:3838:3838   -v /data:/srv/shiny-server/data  --platform linux/amd64 rmvpaeme/fenton:0.1
+docker run -dp 0.0.0.0:3838:3838   -v /data:/srv/shiny-server/data  --platform linux/amd64 rmvpaeme/fenton:0.3
 ```
 
 The `data` folder should contain:
