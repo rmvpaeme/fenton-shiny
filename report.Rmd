@@ -1,0 +1,18 @@
+---
+title: "&#32;"
+output: pdf_document
+geometry: margin=0.5cm
+params:
+  w: NA
+  l: NA
+  hc: NA
+---
+
+
+```{r, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 9, fig.width = 9, dpi = 300}
+# The `params` object is available in the document.
+params$w
+params$l
+params$hc
+```
+

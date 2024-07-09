@@ -4,8 +4,9 @@ library(shiny)
 library(DT)
 
 # Define UI for application 
+#shiny::addResourcePath('www', '/srv/shiny-server/www')
 ui <- fluidPage(
-  theme = shinytheme("flatly"),
+  theme = shinytheme("cosmo"),
   titlePanel("NICU growth curves"),
   sidebarLayout(sidebarPanel(
     tabsetPanel(
@@ -16,7 +17,7 @@ ui <- fluidPage(
                  "advanced", "Show advanced settings",
                  c("no" = "no",
                    "yes" = "yes")
-               )),
+               ),),
       conditionalPanel(
         condition = "input.advanced == 'yes'",
         textInput("sex_GET", "sex (M or F)", value = "M"),
@@ -36,7 +37,8 @@ ui <- fluidPage(
           'file_excel',
           p('Upload Excel file with custom data.', a('Click here', href = "https://github.com/rmvpaeme/fenton-shiny/raw/main/example_excel.xlsx"),  'to download the template Excel file.'),
           accept = c(".xlsx")
-        )
+        ), 
+        
       )
     ),
   ),
@@ -48,6 +50,7 @@ ui <- fluidPage(
       tabPanel(
         "Weight",
         plotOutput("weight", height = "800px", width = "90%"),
+        downloadButton("report", "Download PDF"),
         hr(),
         h4("Disclaimer", style = "font-size:12px;"),
         p(
@@ -273,13 +276,7 @@ server <- function(input, output, session) {
     
     })
   
-  output$weight <- renderPlot({
-    #if (input$sex_GET == "M" ) {
-    #  sex_label = "boys"
-    #} else if (input$sex_GET == "F") {
-    #  sex_label = "girls"
-    #}
-    
+  Plot_weight <- reactive({
     sex_label <- newData()$sex_label
     df <- newData()$df
     
@@ -299,7 +296,7 @@ server <- function(input, output, session) {
           y = as.numeric(value),
           x = PML,
           col = annotation,
-          linetype = NA
+          linetype = NULL
         ),
         size = 3
       ) +
@@ -315,27 +312,10 @@ server <- function(input, output, session) {
         breaks = seq(0, 7200, 400),
         limits = c(0, 7200),
         name = "gram"
-      )# +
-    #annotate(geom = "vline",
-    #         x = c(42),
-    #         xintercept = c(42),
-    #         linetype = c("dashed")) +
-    #annotate(geom = "text",
-    #         label = c(as.character("WHO curve")),
-    #         x = c(42.1),
-    #         y = c(1600),
-    #         angle = 90, 
-    #         vjust = 1, color = "black") +
-    #annotate(geom = "text",
-    #         label = c(as.character("Fenton curve")),
-    #         x = c(41.9),
-    #         y = c(1600),
-    #         angle = 90, 
-    #         vjust = 0, color = "black")
-    
+      )
   })
   
-  output$L <- renderPlot({
+  Plot_length <- reactive({
     
     sex_label <- newData()$sex_label
     df <- newData()$df
@@ -355,7 +335,7 @@ server <- function(input, output, session) {
           y = as.numeric(value),
           x = PML,
           col = annotation,
-          linetype = NA
+          linetype = NULL
         ),
         size = 3
       ) +
@@ -368,31 +348,10 @@ server <- function(input, output, session) {
         legend.title = element_blank()
       ) +
       scale_y_continuous(breaks = seq(18, 70, 4), name = "centimeter") +
-      scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)")#+
-    #annotate(geom = "vline",
-    #         x = c(42),
-    #         xintercept = c(42),
-    #         linetype = c("dashed")) +
-    #annotate(geom = "text",
-    #         label = c(as.character("WHO curve")),
-    #         x = c(42.1),
-    #         y = c(30),
-    #         angle = 90, 
-    #         vjust = 1, color = "black") +
-    #annotate(geom = "text",
-    #         label = c(as.character("Fenton curve")),
-    #         x = c(41.9),
-    #         y = c(30),
-    #         angle = 90, 
-    #         vjust = 0, color = "black")
-    
-    
-    #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
-    
+      scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)")
   })
-  
-  
-  output$HC <- renderPlot({
+
+  Plot_HC <- reactive({
     sex_label <- newData()$sex_label
     df <- newData()$df
     
@@ -411,7 +370,7 @@ server <- function(input, output, session) {
           y = as.numeric(value),
           x = PML,
           col = annotation,
-          linetype = NA
+          linetype = NULL
         ),
         size = 3
       ) +
@@ -427,6 +386,44 @@ server <- function(input, output, session) {
       scale_x_continuous(breaks = seq(22, 50, 2), name = "gestational age (weeks)") #+ facet_wrap(~ type, ncol = 1, scales = "free") #+ ylim(0,5)
     
   })
+  output$weight <- renderPlot({
+    p <- Plot_weight()
+    print(p)
+  })
+  
+  output$L <- renderPlot({
+    p <- Plot_length()
+    print(p)
+
+  })
+  
+  output$HC <- renderPlot({
+    p <- Plot_HC()
+    print(p)
+  })
+  
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.pdf",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(w = Plot_weight(), l = Plot_length(), hc = Plot_HC())
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
 }
 
 # Run the application
