@@ -2,6 +2,14 @@
 .Rhistory
 .Rapp.history
 
+# macOS
+.DS_Store
+
+data/*csv
+data/Longer*
+data/short_data/*
+data/fenton_data*
+
 # Session Data files
 .RData
 .RDataTmp

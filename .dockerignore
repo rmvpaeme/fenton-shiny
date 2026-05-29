@@ -1,0 +1,15 @@
+.git
+.DS_Store
+data/.DS_Store
+data/*
+*.Rproj
+*.Rproj.user
+.Rhistory
+.RData
+rsconnect/
+data/fenton_data.zip
+data/fenton.csr
+data/groeicurve_b.R
+data/groeicurve_g.R
+data/short_data/
+"data/Longer Fenton 2013 Growth Chart Clinical Calculator v9 unprotected.xlsx"
