@@ -43,7 +43,7 @@ The reference data (L/M/S values) is **not bundled in the image** — you must v
 docker run -dp 0.0.0.0:3838:3838 \
   -v /path/to/data:/srv/shiny-server/data \
   --platform linux/amd64 \
-  rmvpaeme/fenton:v1.0.0-beta
+  rmvpaeme/fenton:v1.0.1-beta
 ```
 
 The mounted `data/` folder must contain:
@@ -70,12 +70,20 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 | | Value |
 | --- | --- |
 | Image | `rmvpaeme/fenton` |
-| Tags | `v1.0.0-beta`, `latest` |
+| Tags | `v1.0.1-beta`, `latest` |
 | Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 22.04 jammy) |
 | R packages | shiny, tidyverse, readxl, bslib, shiny.i18n, shinycssloaders, scales, DT |
 | Architecture | linux/amd64 |
 
 ## Changelog
+
+### v1.0.1-beta (2026-05-29)
+
+#### Gebruik / Usage tab
+
+- Replaced the single-line GET example with full bilingual instructions (NL/EN)
+- Covers Excel upload, manual entry, percentile table, language toggle, and URL parameters
+- Content re-renders on language switch via `renderUI` driven by `lang()`
 
 ### v1.0.0-beta (2026-05-29)
 

@@ -191,14 +191,7 @@ ui <- fluidPage(
         tabPanel(i18n$t("Schedelomtrek"),
                  withSpinner(plotOutput("HC", height = "800px", width = "90%"), color = NORD_BLUE2)),
         tabPanel(i18n$t("Percentieltabel"), DT::dataTableOutput("table")),
-        tabPanel(
-          i18n$t("Gebruik"),
-          p(
-            i18n$t("Waarden kunnen ook via een GET-verzoek worden ingevoerd. Voorbeeld: "),
-            a("http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA",
-              href = "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA")
-          )
-        )
+        tabPanel(i18n$t("Gebruik"), uiOutput("gebruik_content"))
       )
     )
   )
@@ -340,6 +333,108 @@ server <- function(input, output, session) {
       y_breaks = seq(18, 70, 4),
       y_name = tr()$t("centimeter"),
       subtitle = tr()$t("Fenton-groeicurve, lengte voor "), tr = tr()
+    )
+  })
+
+  output$gebruik_content <- renderUI({
+    nl <- lang() == "nl"
+
+    example_url <- "http://rubenvp.shinyapps.io/fenton/?advanced=yes&sex_GET=M&PML_GET=23%2B1/7,24%2B1/7,25%2B1/7&weight_GET=400,500,600&HC_GET=23,NA,25&length_GET=34,33,NA"
+
+    if (nl) tagList(
+      div(style = "max-width:760px; padding: 8px 4px 32px;",
+
+        h3("Gebruik"),
+
+        h4("Stap 1 — Kies een invoermethode"),
+        p("Selecteer in het linkerpaneel hoe u de gegevens wilt invoeren."),
+
+        tags$b("Excel-upload (standaard)"),
+        tags$ul(
+          tags$li("Download het sjabloonbestand via de link in het linkerpaneel en vul de meetwaarden in."),
+          tags$li(tags$span("Stel het geslacht in cel ", tags$b("B5"), " in: ", tags$code("M"), " voor jongen, ", tags$code("F"), " voor meisje.")),
+          tags$li("Vul per meting de postmenstruele leeftijd (decimaal, bv. 29,14 = 29 weken + 1 dag), het gewicht (gram), de lengte (cm) en de schedelomtrek (cm) in."),
+          tags$li(tags$span("Gebruik ", tags$code("NA"), " voor ontbrekende waarden.")),
+          tags$li("Upload het bestand via de knop in het linkerpaneel.")
+        ),
+
+        tags$b("Handmatige invoer (geavanceerd)"),
+        tags$ul(
+          tags$li("Vul de waarden per veld in als door komma's gescheiden lijst, bv. 400,500,600."),
+          tags$li(tags$span("Gebruik ", tags$code("NA"), " voor ontbrekende waarden.")),
+          tags$li("Alle velden moeten evenveel waarden bevatten.")
+        ),
+
+        h4("Stap 2 — Groeicurves"),
+        p("De tabbladen ", tags$b("Gewicht"), ", ", tags$b("Lengte"), " en ", tags$b("Schedelomtrek"),
+          " tonen de Fenton 2013 referentiecurven (P03, P10, P50, P90, P97) met uw meetwaarden als punten."),
+
+        h4("Stap 3 — Percentieltabel"),
+        p("Het tabblad ", tags$b("Percentieltabel"), " toont voor elke meting het berekende percentiel op de Fenton-referentie. Gebruik de knop ", tags$b("Bewaar als Excel-bestand"), " om de tabel te downloaden."),
+
+        h4("Taalknop"),
+        p("Via de knop ", tags$b("EN"), " rechtsboven wisselt naar het Engels. Alle interfacelabels, astitels en tabbladnamen worden bijgewerkt. Klik nogmaals op ", tags$b("NL"), " om terug te schakelen."),
+
+        h4("URL-parameters (geavanceerd)"),
+        p("Waarden kunnen ook worden meegegeven via een URL GET-verzoek. Ondersteunde parameters:"),
+        tags$ul(
+          tags$li(tags$code("advanced=yes"), " — activeer handmatige invoer"),
+          tags$li(tags$code("sex_GET=M"), " of ", tags$code("sex_GET=F"), " — geslacht"),
+          tags$li(tags$code("PML_GET=23+1/7,24+1/7"), " — postmenstruele leeftijd (weken; decimaal of breuknotatie)"),
+          tags$li(tags$code("weight_GET=400,500"), " — gewicht in gram"),
+          tags$li(tags$code("length_GET=34,NA"), " — lengte in cm"),
+          tags$li(tags$code("HC_GET=23,NA"), " — schedelomtrek in cm")
+        ),
+        p("Voorbeeld-URL:"),
+        p(a(example_url, href = example_url, style = "word-break:break-all;"))
+      )
+    ) else tagList(
+      div(style = "max-width:760px; padding: 8px 4px 32px;",
+
+        h3("Usage"),
+
+        h4("Step 1 — Choose an input method"),
+        p("Select how you want to enter data in the left-hand panel."),
+
+        tags$b("Excel upload (default)"),
+        tags$ul(
+          tags$li("Download the template file using the link in the left panel and fill in your measurements."),
+          tags$li(tags$span("Set the sex in cell ", tags$b("B5"), ": ", tags$code("M"), " for boy, ", tags$code("F"), " for girl.")),
+          tags$li("For each measurement, enter the postmenstrual age (decimal, e.g. 29.14 = 29 weeks + 1 day), weight (grams), length (cm), and head circumference (cm)."),
+          tags$li(tags$span("Use ", tags$code("NA"), " for missing values.")),
+          tags$li("Upload the completed file using the button in the left panel.")
+        ),
+
+        tags$b("Manual entry (advanced)"),
+        tags$ul(
+          tags$li("Enter values for each field as a comma-separated list, e.g. 400,500,600."),
+          tags$li(tags$span("Use ", tags$code("NA"), " for missing values.")),
+          tags$li("All fields must contain the same number of values.")
+        ),
+
+        h4("Step 2 — Growth curves"),
+        p("The ", tags$b("Weight"), ", ", tags$b("Length"), ", and ", tags$b("Head circumference"),
+          " tabs display the Fenton 2013 reference curves (P03, P10, P50, P90, P97) with your measurements plotted as points."),
+
+        h4("Step 3 — Percentile table"),
+        p("The ", tags$b("Percentile table"), " tab shows the calculated percentile on the Fenton reference for each measurement. Use the ", tags$b("Save as Excel file"), " button to download the table."),
+
+        h4("Language button"),
+        p("Click the ", tags$b("NL"), " button in the top-right corner to switch to Dutch. All interface labels, axis titles, and tab names are updated. Click ", tags$b("EN"), " to switch back."),
+
+        h4("URL parameters (advanced)"),
+        p("Values can also be passed via a URL GET request. Supported parameters:"),
+        tags$ul(
+          tags$li(tags$code("advanced=yes"), " — enable manual entry"),
+          tags$li(tags$code("sex_GET=M"), " or ", tags$code("sex_GET=F"), " — sex"),
+          tags$li(tags$code("PML_GET=23+1/7,24+1/7"), " — postmenstrual age (weeks; decimal or fraction notation)"),
+          tags$li(tags$code("weight_GET=400,500"), " — weight in grams"),
+          tags$li(tags$code("length_GET=34,NA"), " — length in cm"),
+          tags$li(tags$code("HC_GET=23,NA"), " — head circumference in cm")
+        ),
+        p("Example URL:"),
+        p(a(example_url, href = example_url, style = "word-break:break-all;"))
+      )
     )
   })
 
