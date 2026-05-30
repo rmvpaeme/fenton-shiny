@@ -4,7 +4,8 @@ A Shiny app that plots the Fenton 2013 preterm growth curves (weight, length, he
 circumference) for an infant and overlays measured values, plus a percentile table.
 
 The interface is **bilingual (Dutch by default, English)** — switch with the small language
-toggle in the top-right corner — and uses a calm **Nord Light** theme.
+toggle in the top-right corner.
+
 
 ## Usage
 The purpose of this app is not to be a fully customizable growth chart plotter, this already exists at https://peditools.org/peditools_universal/. 
@@ -43,7 +44,7 @@ The reference data (L/M/S values) is **not bundled in the image** — you must v
 docker run -dp 0.0.0.0:3838:3838 \
   -v /path/to/data:/srv/shiny-server/data \
   --platform linux/amd64 \
-  rmvpaeme/fenton:v1.0.1-beta
+  rmvpaeme/fenton:v1.0.2-beta
 ```
 
 The mounted `data/` folder must contain:
@@ -70,12 +71,21 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 | | Value |
 | --- | --- |
 | Image | `rmvpaeme/fenton` |
-| Tags | `v1.0.1-beta`, `latest` |
+| Tags | `v1.0.2-beta`, `latest` |
 | Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 22.04 jammy) |
 | R packages | shiny, tidyverse, readxl, bslib, shiny.i18n, shinycssloaders, scales, DT |
 | Architecture | linux/amd64 |
 
 ## Changelog
+
+### v1.0.2-beta (2026-05-29)
+
+#### Theme
+
+- Reverted to original `shinythemes` flatly theme; removed Nord Light custom CSS
+- Removed bslib, Nord colour constants, and custom header div
+- Language toggle button repositioned with a single inline style (no external CSS)
+- Plot colours restored to ggplot2 defaults
 
 ### v1.0.1-beta (2026-05-29)
 

@@ -1,6 +1,6 @@
 library(tidyverse)
 library(shiny)
-library(bslib)
+library(shinythemes)
 library(shiny.i18n)
 library(shinycssloaders)
 library(DT)
@@ -12,28 +12,6 @@ library(DT)
 # ---------------------------------------------------------------------------
 i18n <- Translator$new(translation_json_path = "www/translations.json")
 i18n$set_translation_language("nl")
-
-# ---------------------------------------------------------------------------
-# Nord Light theme (palette ported from the rshiny_claude reference app).
-# Calm, muted: frost blues for curves/chrome, aurora red for measurements.
-# ---------------------------------------------------------------------------
-NORD_BG    <- "#FFFFFF"
-NORD_FG    <- "#2E3440"
-NORD_BLUE  <- "#5E81AC" # frost3 - primary / curves
-NORD_BLUE2 <- "#81A1C1" # frost2 - secondary / spinner
-NORD_RED   <- "#BF616A" # aurora red - measured points
-NORD_GRID  <- "#E5E9F0"
-
-app_font <- font_collection("UGent Panno Text", "Arial", "sans-serif")
-app_theme <- bs_theme(
-  version      = 5,
-  bg           = NORD_BG,
-  fg           = NORD_FG,
-  primary      = NORD_BLUE,
-  secondary    = NORD_BLUE2,
-  base_font    = app_font,
-  heading_font = app_font
-)
 
 # ---------------------------------------------------------------------------
 # Reference data: load the static Fenton L/M/S + percentile curves once at
@@ -91,23 +69,19 @@ growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, 
   }
 
   ggplot(curves, aes(x = PML, y = as.numeric(value), linetype = annotation)) +
-    geom_line(color = NORD_BLUE) +
+    geom_line() +
     geom_point(
       data = measured,
-      aes(x = PML, y = as.numeric(value), color = "measure"),
+      aes(x = PML, y = as.numeric(value), color = annotation),
       inherit.aes = FALSE, size = 3
     ) +
-    scale_color_manual(values = c(measure = NORD_RED),
-                       labels = tr$t("meting"), name = NULL) +
     theme_bw(base_size = 18) +
     labs(subtitle = paste0(subtitle, sex_word)) +
     theme(
-      text            = element_text(family = "Arial"),
-      panel.grid      = element_line(color = NORD_GRID),
+      text            = element_text(size = 20),
       legend.position = "bottom",
       legend.box      = "horizontal",
-      legend.title    = element_blank(),
-      plot.subtitle   = element_text(color = NORD_BLUE, face = "bold")
+      legend.title    = element_blank()
     ) +
     scale_x_continuous(breaks = seq(22, 50, 2), name = tr$t("zwangerschapsduur (weken)")) +
     y_scale
@@ -117,10 +91,12 @@ growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, 
 # UI
 # ===========================================================================
 ui <- fluidPage(
-  theme = app_theme,
+  theme = shinytheme("cosmo"),
   usei18n(i18n),
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "nord.css"),
+    tags$style(HTML("
+      .lang-switch { position: fixed; top: 14px; right: 18px; z-index: 1050; }
+    ")),
     tags$title("Fenton - NICU groeicurves")
   ),
 
@@ -128,11 +104,7 @@ ui <- fluidPage(
   # the language you switch TO (NL -> shows "EN", EN -> shows "NL").
   div(class = "lang-switch", actionButton("toggle_lang", "EN")),
 
-  div(
-    class = "app-header",
-    h1(i18n$t("NICU-groeicurves")),
-    p(class = "app-subtitle", i18n$t("Fenton 2013 groeicurves voor premature baby's"))
-  ),
+  titlePanel(i18n$t("NICU-groeicurves")),
 
   sidebarLayout(
     sidebarPanel(
@@ -173,7 +145,7 @@ ui <- fluidPage(
         type = "tabs",
         tabPanel(
           i18n$t("Gewicht"),
-          withSpinner(plotOutput("weight", height = "800px", width = "90%"), color = NORD_BLUE2),
+          withSpinner(plotOutput("weight", height = "800px", width = "90%")),
           hr(),
           h4("Disclaimer"),
           p(
@@ -187,9 +159,9 @@ ui <- fluidPage(
           )
         ),
         tabPanel(i18n$t("Lengte"),
-                 withSpinner(plotOutput("L", height = "800px", width = "90%"), color = NORD_BLUE2)),
+                 withSpinner(plotOutput("L", height = "800px", width = "90%"))),
         tabPanel(i18n$t("Schedelomtrek"),
-                 withSpinner(plotOutput("HC", height = "800px", width = "90%"), color = NORD_BLUE2)),
+                 withSpinner(plotOutput("HC", height = "800px", width = "90%"))),
         tabPanel(i18n$t("Percentieltabel"), DT::dataTableOutput("table")),
         tabPanel(i18n$t("Gebruik"), uiOutput("gebruik_content"))
       )
@@ -373,7 +345,7 @@ server <- function(input, output, session) {
         p("Het tabblad ", tags$b("Percentieltabel"), " toont voor elke meting het berekende percentiel op de Fenton-referentie. Gebruik de knop ", tags$b("Bewaar als Excel-bestand"), " om de tabel te downloaden."),
 
         h4("Taalknop"),
-        p("Via de knop ", tags$b("EN"), " rechtsboven wisselt naar het Engels. Alle interfacelabels, astitels en tabbladnamen worden bijgewerkt. Klik nogmaals op ", tags$b("NL"), " om terug te schakelen."),
+        p("De knop ", tags$b("EN"), " rechtsboven wisselt naar het Engels. Alle interfacelabels, astitels en tabbladnamen worden bijgewerkt. Klik nogmaals op ", tags$b("NL"), " om terug te schakelen."),
 
         h4("URL-parameters (geavanceerd)"),
         p("Waarden kunnen ook worden meegegeven via een URL GET-verzoek. Ondersteunde parameters:"),
