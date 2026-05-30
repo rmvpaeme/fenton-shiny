@@ -20,6 +20,7 @@ RUN R -e 'install.packages(c(\
               "shiny.i18n", \
               "shinycssloaders", \
               "scales", \
+              "plotly", \
               "DT" \
             ), \
             repos="https://packagemanager.posit.co/cran/__linux__/jammy/2024-12-01"\

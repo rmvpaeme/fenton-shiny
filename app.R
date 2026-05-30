@@ -3,6 +3,7 @@ library(shiny)
 library(shinythemes)
 library(shiny.i18n)
 library(shinycssloaders)
+library(plotly)
 library(DT)
 
 # ---------------------------------------------------------------------------
@@ -57,9 +58,12 @@ split_values <- function(x) suppressWarnings(as.numeric(unlist(strsplit(as.chara
 # the y-axis labels (used for head circumference -> XX.X).
 # ---------------------------------------------------------------------------
 growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, tr,
-                        y_limits = NULL, y_accuracy = NULL) {
+                        y_limits = NULL, y_accuracy = NULL, base_size = 11) {
   curves   <- df %>% filter(type == measure_type, annotation != "measure", value > 0)
   measured <- df %>% filter(type == measure_type, annotation == "measure", value > 0)
+
+  meting_label <- tr$t("meting")
+  dec          <- if (!is.null(y_accuracy)) 1L else 0L
 
   y_scale <- if (is.null(y_accuracy)) {
     scale_y_continuous(breaks = y_breaks, limits = y_limits, name = y_name)
@@ -68,17 +72,22 @@ growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, 
                        labels = scales::label_number(accuracy = y_accuracy))
   }
 
-  ggplot(curves, aes(x = PML, y = as.numeric(value), linetype = annotation)) +
+  ggplot(curves,
+         aes(x = PML, y = as.numeric(value), linetype = annotation, group = annotation,
+             text = paste0(annotation, "<br>GA: ", round(PML, 2), " wk"))) +
     geom_line() +
     geom_point(
-      data = measured,
-      aes(x = PML, y = as.numeric(value), color = annotation),
-      inherit.aes = FALSE, size = 3
+      data = measured %>% mutate(lbl = meting_label,
+                                 val_fmt = round(as.numeric(value), dec)),
+      aes(x = PML, y = as.numeric(value), color = lbl,
+          text = paste0("GA: ", round(PML, 2), " wk<br>",
+                        y_name, ": ", val_fmt)),
+      inherit.aes = FALSE, size = 2
     ) +
-    theme_bw(base_size = 18) +
+    scale_color_manual(values = setNames("coral", meting_label), name = NULL) +
+    theme_bw(base_size = base_size) +
     labs(subtitle = paste0(subtitle, sex_word)) +
     theme(
-      text            = element_text(size = 20),
       legend.position = "bottom",
       legend.box      = "horizontal",
       legend.title    = element_blank()
@@ -137,7 +146,9 @@ ui <- fluidPage(
         textInput("HC_GET", i18n$t("Schedelomtrek (in cm) in CSV"), value = NA),
         textInput("weight_GET", i18n$t("Gewicht (in gram) in CSV"), value = NA),
         textInput("length_GET", i18n$t("Lengte (in cm) in CSV"), value = NA)
-      )
+      ),
+      hr(),
+      downloadButton("download_pdf", i18n$t("Download PDF"), style = "width:100%;")
     ),
 
     mainPanel(
@@ -145,7 +156,7 @@ ui <- fluidPage(
         type = "tabs",
         tabPanel(
           i18n$t("Gewicht"),
-          withSpinner(plotOutput("weight", height = "800px", width = "90%")),
+          withSpinner(plotlyOutput("weight", height = "700px")),
           hr(),
           h4("Disclaimer"),
           p(
@@ -159,9 +170,9 @@ ui <- fluidPage(
           )
         ),
         tabPanel(i18n$t("Lengte"),
-                 withSpinner(plotOutput("L", height = "800px", width = "90%"))),
+                 withSpinner(plotlyOutput("L", height = "700px"))),
         tabPanel(i18n$t("Schedelomtrek"),
-                 withSpinner(plotOutput("HC", height = "800px", width = "90%"))),
+                 withSpinner(plotlyOutput("HC", height = "700px"))),
         tabPanel(i18n$t("Percentieltabel"), DT::dataTableOutput("table")),
         tabPanel(i18n$t("Gebruik"), uiOutput("gebruik_content"))
       )
@@ -290,23 +301,63 @@ server <- function(input, output, session) {
     )
   })
 
-  output$weight <- renderPlot({
-    growth_plot(
-      newData()$df, "weight", sex_word(),
-      y_breaks = seq(0, 7200, 400), y_limits = c(0, 7200),
-      y_name = tr()$t("gram"),
-      subtitle = tr()$t("Fenton-groeicurve, gewicht voor "), tr = tr()
-    )
+  # ggplot objects shared by both the plotly renders and the PDF download.
+  # base_size = 11 for screen (plotly handles its own sizing);
+  # base_size = 13 for PDF (larger text for print).
+  gg_weight <- reactive({
+    growth_plot(newData()$df, "weight", sex_word(),
+                y_breaks = seq(0, 7200, 400), y_limits = c(0, 7200),
+                y_name = tr()$t("gram"),
+                subtitle = tr()$t("Fenton-groeicurve, gewicht voor "), tr = tr())
+  })
+  gg_length <- reactive({
+    growth_plot(newData()$df, "length", sex_word(),
+                y_breaks = seq(18, 70, 4),
+                y_name = tr()$t("centimeter"),
+                subtitle = tr()$t("Fenton-groeicurve, lengte voor "), tr = tr())
+  })
+  gg_hc <- reactive({
+    growth_plot(newData()$df, "HC", sex_word(),
+                y_breaks = seq(18, 60, 2),
+                y_name = tr()$t("centimeter"),
+                subtitle = tr()$t("Fenton-groeicurve, schedelomtrek voor "), tr = tr(),
+                y_accuracy = 0.1)
   })
 
-  output$L <- renderPlot({
-    growth_plot(
-      newData()$df, "length", sex_word(),
-      y_breaks = seq(18, 70, 4),
-      y_name = tr()$t("centimeter"),
-      subtitle = tr()$t("Fenton-groeicurve, lengte voor "), tr = tr()
-    )
-  })
+  # Convert ggplot -> plotly: clean title, tooltip, legend names, and layout.
+  as_plotly <- function(p) {
+    title_text <- p$labels$subtitle
+    p <- p + labs(subtitle = NULL)
+    plt <- ggplotly(p, tooltip = "text") %>%
+      layout(
+        title  = list(text = title_text, font = list(size = 13), x = 0.05),
+        legend = list(orientation = "h", x = 0.5, xanchor = "center", y = -0.15,
+                      traceorder = "normal"),
+        font   = list(size = 11),
+        margin = list(t = 50, b = 80, l = 60, r = 20)
+      )
+    # Strip "(P03,1)" -> "P03", "(meting,1)" -> "meting" from trace names.
+    plt$x$data <- lapply(plt$x$data, function(trace) {
+      if (!is.null(trace$name))
+        trace$name <- gsub("^\\((.+),\\d+\\)$", "\\1", trace$name)
+      trace
+    })
+    plt
+  }
+
+  output$weight <- renderPlotly({ as_plotly(gg_weight()) })
+  output$L      <- renderPlotly({ as_plotly(gg_length()) })
+
+  output$download_pdf <- downloadHandler(
+    filename = function() paste0("groeicurves_", Sys.Date(), ".pdf"),
+    content  = function(file) {
+      pdf(file, width = 13, height = 8)
+      print(gg_weight() + theme(text = element_text(size = 13)))
+      print(gg_length() + theme(text = element_text(size = 13)))
+      print(gg_hc()    + theme(text = element_text(size = 13)))
+      dev.off()
+    }
+  )
 
   output$gebruik_content <- renderUI({
     nl <- lang() == "nl"
@@ -410,15 +461,7 @@ server <- function(input, output, session) {
     )
   })
 
-  output$HC <- renderPlot({
-    growth_plot(
-      newData()$df, "HC", sex_word(),
-      y_breaks = seq(18, 60, 2),
-      y_name = tr()$t("centimeter"),
-      subtitle = tr()$t("Fenton-groeicurve, schedelomtrek voor "), tr = tr(),
-      y_accuracy = 0.1
-    )
-  })
+  output$HC <- renderPlotly({ as_plotly(gg_hc()) })
 }
 
 # Run the application

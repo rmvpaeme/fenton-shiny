@@ -24,6 +24,7 @@
     { "nl": ". Bron: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. Een uitgebreidere toepassing om groeiwaarden manueel in te voeren is beschikbaar op ", "en": ". Source: Fenton TR, Kim JH. A systematic review and meta-analysis to revise the Fenton growth chart for preterm infants. BMC Pediatr. 2013;13:59. A more extensive application to manually enter growth values can be found at " },
     { "nl": "Waarden kunnen ook via een GET-verzoek worden ingevoerd. Voorbeeld: ", "en": "Values can also be entered through a GET request. Example: " },
     { "nl": "Bewaar als Excel-bestand", "en": "Save as Excel file" },
+    { "nl": "Download PDF", "en": "Download PDF" },
     { "nl": "Fenton-groeicurve, gewicht voor ", "en": "Fenton growth curve, weight for " },
     { "nl": "Fenton-groeicurve, lengte voor ", "en": "Fenton growth curve, length for " },
     { "nl": "Fenton-groeicurve, schedelomtrek voor ", "en": "Fenton growth curve, head circumference for " },

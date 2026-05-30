@@ -44,7 +44,7 @@ The reference data (L/M/S values) is **not bundled in the image** — you must v
 docker run -dp 0.0.0.0:3838:3838 \
   -v /path/to/data:/srv/shiny-server/data \
   --platform linux/amd64 \
-  rmvpaeme/fenton:v1.0.2-beta
+  rmvpaeme/fenton:v1.0.3-beta
 ```
 
 The mounted `data/` folder must contain:
@@ -71,12 +71,22 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 | | Value |
 | --- | --- |
 | Image | `rmvpaeme/fenton` |
-| Tags | `v1.0.2-beta`, `latest` |
+| Tags | `v1.0.3-beta`, `latest` |
 | Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 22.04 jammy) |
 | R packages | shiny, tidyverse, readxl, bslib, shiny.i18n, shinycssloaders, scales, DT |
 | Architecture | linux/amd64 |
 
 ## Changelog
+
+### v1.0.3-beta (2026-05-30)
+
+#### Interactive plots (plotly)
+
+- Replaced static ggplot plots with interactive plotly plots (zoom, pan, hover)
+- `growth_plot()` still returns a ggplot object, wrapped with `ggplotly()` for display
+- Clean tooltips via custom `text` aesthetic: percentile + GA for curves, GA + value for measurements
+- Legend cleaned up: trace names stripped of `(P03,1)` format → `P03`; measurement points use a separate labelled color scale to avoid the double "annotation" header; added `group = annotation` to restore line continuity
+- Added **Download PDF** button in sidebar: 3-page PDF of the ggplot figures (weight, length, head circumference)
 
 ### v1.0.2-beta (2026-05-29)
 
