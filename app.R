@@ -58,12 +58,27 @@ split_values <- function(x) suppressWarnings(as.numeric(unlist(strsplit(as.chara
 # the y-axis labels (used for head circumference -> XX.X).
 # ---------------------------------------------------------------------------
 growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, tr,
-                        y_limits = NULL, y_accuracy = NULL, base_size = 11) {
+                        y_limits = NULL, y_accuracy = NULL, base_size = 11, pct_df = NULL) {
   curves   <- df %>% filter(type == measure_type, annotation != "measure", value > 0)
   measured <- df %>% filter(type == measure_type, annotation == "measure", value > 0)
 
   meting_label <- tr$t("meting")
+  pct_label    <- tr$t("Percentiel")
   dec          <- if (!is.null(y_accuracy)) 1L else 0L
+
+  # Join precomputed percentiles onto measured points (keyed by PML).
+  if (!is.null(pct_df) && nrow(pct_df) > 0 && nrow(measured) > 0) {
+    measured <- measured %>%
+      left_join(pct_df %>% select(PML, pct), by = "PML")
+  } else {
+    measured$pct <- NA_real_
+  }
+
+  measured <- measured %>% mutate(
+    lbl     = meting_label,
+    val_fmt = round(as.numeric(value), dec),
+    pct_str = ifelse(!is.na(pct), paste0("<br>", pct_label, ": ", pct, "%"), "")
+  )
 
   y_scale <- if (is.null(y_accuracy)) {
     scale_y_continuous(breaks = y_breaks, limits = y_limits, name = y_name)
@@ -77,11 +92,10 @@ growth_plot <- function(df, measure_type, sex_word, y_breaks, y_name, subtitle, 
              text = paste0(annotation, "<br>GA: ", round(PML, 2), " wk"))) +
     geom_line() +
     geom_point(
-      data = measured %>% mutate(lbl = meting_label,
-                                 val_fmt = round(as.numeric(value), dec)),
+      data = measured,
       aes(x = PML, y = as.numeric(value), color = lbl,
           text = paste0("GA: ", round(PML, 2), " wk<br>",
-                        y_name, ": ", val_fmt)),
+                        y_name, ": ", val_fmt, pct_str)),
       inherit.aes = FALSE, size = 2
     ) +
     scale_color_manual(values = setNames("coral", meting_label), name = NULL) +
@@ -256,17 +270,21 @@ server <- function(input, output, session) {
     tr()$t(if (identical(newData()$sex_code, "M")) "jongens" else "meisjes")
   })
 
-  output$table <- DT::renderDataTable({
+  # Shared percentile computation — used by both the table and plot tooltips.
+  pct_data <- reactive({
     LMS2p <- function(L, M, S, X) pnorm((((X / M) ^ L) - 1) / (L * S))
     df <- newData()$df
+
+    if (nrow(filter(df, annotation == "measure", value > 0)) == 0)
+      return(tibble(type = character(), PML = numeric(), value = numeric(), pct = numeric()))
 
     df_spread_measure <- df %>%
       filter(annotation == "measure") %>%
       spread(key = annotation, value = value) %>%
       select(-c(L, M, S))
-    df_spread_measure$PML_orig <- df_spread_measure$PML
-    df_spread_measure$PML <- round(df_spread_measure$PML, 2)
-    df_spread_measure$annotation <- "measure"
+    df_spread_measure$PML_orig    <- df_spread_measure$PML
+    df_spread_measure$PML         <- round(df_spread_measure$PML, 2)
+    df_spread_measure$annotation  <- "measure"
 
     df_spread_LMS <- df %>%
       filter(annotation != "measure") %>%
@@ -274,22 +292,54 @@ server <- function(input, output, session) {
     df_spread_LMS$PML <- round(df_spread_LMS$PML, 2)
 
     df_spread_all <- left_join(df_spread_LMS, df_spread_measure)
-    df_spread_all$P_measure <- LMS2p(df_spread_all$L, df_spread_all$M, df_spread_all$S, X = df_spread_all$measure)
-    df_spread_all <- df_spread_all %>%
+    df_spread_all$P_measure <- LMS2p(
+      df_spread_all$L, df_spread_all$M, df_spread_all$S, X = df_spread_all$measure
+    )
+
+    df_spread_all %>%
       filter(annotation == "measure") %>%
-      transmute(measurement = type, GA = round(PML_orig, 2),
-                Percentile = round(P_measure * 100, 2), value = measure) %>%
-      filter(value > 0) %>%
-      arrange(measurement, GA) %>%
-      # Head circumference is shown with one decimal everywhere (XX.X).
-      mutate(value = case_when(
-        measurement == "HC"     ~ sprintf("%.1f", value),
-        measurement == "weight" ~ sprintf("%.0f", value),
-        TRUE                    ~ sprintf("%.1f", value)
-      ))
+      transmute(type, PML = PML_orig, value = measure,
+                pct = round(P_measure * 100, 1)) %>%
+      filter(value > 0)
+  })
+
+  ga_fmt <- function(x) {
+    w <- floor(x); d <- round((x - w) * 7)
+    paste0(w, "+", d, "/7")
+  }
+
+  output$table <- DT::renderDataTable({
+    validate(need(
+      nrow(pct_data()) > 0,
+      if (lang() == "nl") "Voer meetgegevens in om de percentieltabel te tonen."
+      else "Enter measurement data to show the percentile table."
+    ))
+
+    result <- pct_data() %>%
+      arrange(type, PML) %>%
+      mutate(
+        meting = case_when(
+          type == "weight" ~ tr()$t("Gewicht"),
+          type == "length" ~ tr()$t("Lengte"),
+          type == "HC"     ~ tr()$t("Schedelomtrek"),
+          TRUE             ~ type
+        ),
+        ga     = ga_fmt(PML),
+        waarde = case_when(
+          type == "weight" ~ paste0(sprintf("%.0f", value), " g"),
+          type == "HC"     ~ paste0(sprintf("%.1f", value), " cm"),
+          TRUE             ~ paste0(sprintf("%.1f", value), " cm")
+        )
+      ) %>%
+      transmute(
+        !!tr()$t("Meting")            := meting,
+        !!tr()$t("Zwangerschapsduur") := ga,
+        !!tr()$t("Percentiel")        := pct,
+        !!tr()$t("Waarde")            := waarde
+      )
 
     DT::datatable(
-      df_spread_all,
+      result,
       extensions = "Buttons",
       options = list(
         paging = TRUE, searching = TRUE, fixedColumns = TRUE, autoWidth = TRUE,
@@ -308,20 +358,23 @@ server <- function(input, output, session) {
     growth_plot(newData()$df, "weight", sex_word(),
                 y_breaks = seq(0, 7200, 400), y_limits = c(0, 7200),
                 y_name = tr()$t("gram"),
-                subtitle = tr()$t("Fenton-groeicurve, gewicht voor "), tr = tr())
+                subtitle = tr()$t("Fenton-groeicurve, gewicht voor "), tr = tr(),
+                pct_df = filter(pct_data(), type == "weight"))
   })
   gg_length <- reactive({
     growth_plot(newData()$df, "length", sex_word(),
                 y_breaks = seq(18, 70, 4),
                 y_name = tr()$t("centimeter"),
-                subtitle = tr()$t("Fenton-groeicurve, lengte voor "), tr = tr())
+                subtitle = tr()$t("Fenton-groeicurve, lengte voor "), tr = tr(),
+                pct_df = filter(pct_data(), type == "length"))
   })
   gg_hc <- reactive({
     growth_plot(newData()$df, "HC", sex_word(),
                 y_breaks = seq(18, 60, 2),
                 y_name = tr()$t("centimeter"),
                 subtitle = tr()$t("Fenton-groeicurve, schedelomtrek voor "), tr = tr(),
-                y_accuracy = 0.1)
+                y_accuracy = 0.1,
+                pct_df = filter(pct_data(), type == "HC"))
   })
 
   # Convert ggplot -> plotly: clean title, tooltip, legend names, and layout.

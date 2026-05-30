@@ -44,7 +44,7 @@ The reference data (L/M/S values) is **not bundled in the image** — you must v
 docker run -dp 0.0.0.0:3838:3838 \
   -v /path/to/data:/srv/shiny-server/data \
   --platform linux/amd64 \
-  rmvpaeme/fenton:v1.0.3-beta
+  rmvpaeme/fenton:v1.0.4-beta
 ```
 
 The mounted `data/` folder must contain:
@@ -71,12 +71,21 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 | | Value |
 | --- | --- |
 | Image | `rmvpaeme/fenton` |
-| Tags | `v1.0.3-beta`, `latest` |
+| Tags | `v1.0.4-beta`, `latest` |
 | Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 22.04 jammy) |
 | R packages | shiny, tidyverse, readxl, bslib, shiny.i18n, shinycssloaders, scales, DT |
 | Architecture | linux/amd64 |
 
 ## Changelog
+
+### v1.0.4-beta (2026-05-30)
+
+#### Percentile table polish + plot tooltip
+
+- Percentile computation extracted to a shared `pct_data` reactive — computed once, used by both the table and plot hover tooltips
+- Plot hover tooltips now include the percentile (e.g. `GA: 34+4/7 wk / gram: 1860 / Percentiel: 12.3%`)
+- Table: GA formatted as `week+day/7` (e.g. `29+1/7`) instead of decimal; units added to values (`g`, `cm`); measurement type names translated (Gewicht/Weight, Lengte/Length, Schedelomtrek/Head circumference); column headers translated (NL/EN)
+- Empty-state message when no data is entered ("Voer meetgegevens in…" / "Enter measurement data…")
 
 ### v1.0.3-beta (2026-05-30)
 

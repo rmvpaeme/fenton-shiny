@@ -33,6 +33,10 @@
     { "nl": "zwangerschapsduur (weken)", "en": "gestational age (weeks)" },
     { "nl": "gram", "en": "gram" },
     { "nl": "centimeter", "en": "centimeter" },
-    { "nl": "meting", "en": "measurement" }
+    { "nl": "meting", "en": "measurement" },
+    { "nl": "Meting", "en": "Measurement" },
+    { "nl": "Zwangerschapsduur", "en": "Gestational age" },
+    { "nl": "Percentiel", "en": "Percentile" },
+    { "nl": "Waarde", "en": "Value" }
   ]
 }
