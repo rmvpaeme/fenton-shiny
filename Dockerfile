@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
 # R packages (pinned to a Posit Package Manager snapshot for reproducibility)
 RUN R -e 'install.packages(c(\
               "shiny", \
+              "shinythemes", \
               "tidyverse", \
               "readxl", \
               "bslib", \
@@ -23,7 +24,7 @@ RUN R -e 'install.packages(c(\
               "plotly", \
               "DT" \
             ), \
-            repos="https://packagemanager.posit.co/cran/__linux__/jammy/2024-12-01"\
+            repos="https://packagemanager.posit.co/cran/__linux__/noble/2024-12-01"\
           )'
 
 # copy app (www/, data/, app.R, …); see .dockerignore for exclusions
