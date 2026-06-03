@@ -138,14 +138,6 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 - Loading spinner added to each plot panel
 - Flat header with app title and subtitle
 
-#### Styling — Nord Light theme
-
-- Ported Nord Light palette from companion app: frost blue `#5E81AC` for curves and chrome, aurora red `#BF616A` for measured data points, soft `#ECEFF4`/`#E5E9F0` backgrounds
-- `bslib` Bootstrap 5 theme replaces the old `shinythemes` flatly theme
-- Custom `www/nord.css`: flat header, soft borders, muted nav tabs, no loud accent colours
-- Font stack: UGent Panno Text (self-hosted, opt-in via `www/fonts/`) with Arial fallback
-- Plot grid colour harmonised with theme (`#E5E9F0`)
-
 #### Head circumference formatting
 
 - HC displayed as XX.X (one decimal) everywhere: plot y-axis labels and percentile table
