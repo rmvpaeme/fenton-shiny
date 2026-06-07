@@ -1,12 +1,11 @@
 .git
 .DS_Store
-data/.DS_Store
-data/*
 *.Rproj
 *.Rproj.user
 .Rhistory
 .RData
 rsconnect/
+data/.DS_Store
 data/fenton_data.zip
 data/fenton.csr
 data/groeicurve_b.R
