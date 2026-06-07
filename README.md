@@ -72,7 +72,7 @@ The app is then available at `http://localhost:3838` or `http://server-ip:3838`.
 | --- | --- |
 | Image | `rmvpaeme/fenton` |
 | Tags | `v1.0.4-beta`, `latest` |
-| Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 22.04 jammy) |
+| Base | `rocker/shiny:4.4.2` (R 4.4.2, Ubuntu 24.04 jammy) |
 | R packages | shiny, tidyverse, readxl, bslib, shiny.i18n, shinycssloaders, scales, DT |
 | Architecture | linux/amd64 |
 
